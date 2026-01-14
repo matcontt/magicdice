@@ -1,5 +1,7 @@
+// components/molecules/DiceFace.tsx
+
 import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,7 +10,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { GlowingDot } from '../atoms/GlowingDot';
-import { cn } from '@/lib/utils';
 import { ANIMATION_CONFIG } from '@/lib/core/constants';
 
 type DiceFaceProps = {
@@ -16,38 +17,109 @@ type DiceFaceProps = {
   isRolling?: boolean;
 };
 
-const dotPositions = {
-  1: [{ top: '50%', left: '50%', translate: '-50%' }],
-  2: [
-    { top: '25%', left: '25%' },
-    { bottom: '25%', right: '25%' },
-  ],
-  3: [
-    { top: '25%', left: '25%' },
-    { top: '50%', left: '50%', translate: '-50%' },
-    { bottom: '25%', right: '25%' },
-  ],
-  4: [
-    { top: '25%', left: '25%' },
-    { top: '25%', right: '25%' },
-    { bottom: '25%', left: '25%' },
-    { bottom: '25%', right: '25%' },
-  ],
-  5: [
-    { top: '25%', left: '25%' },
-    { top: '25%', right: '25%' },
-    { top: '50%', left: '50%', translate: '-50%' },
-    { bottom: '25%', left: '25%' },
-    { bottom: '25%', right: '25%' },
-  ],
-  6: [
-    { top: '20%', left: '25%' },
-    { top: '20%', right: '25%' },
-    { top: '50%', left: '25%', translate: '-50%' },
-    { top: '50%', right: '25%', translate: '-50%' },
-    { bottom: '20%', left: '25%' },
-    { bottom: '20%', right: '25%' },
-  ],
+// Componente para cada patrón de dado
+const DicePattern: React.FC<{ value: number }> = ({ value }) => {
+  switch (value) {
+    case 1:
+      return (
+        <View className="absolute inset-0 items-center justify-center">
+          <GlowingDot size="lg" />
+        </View>
+      );
+
+    case 2:
+      return (
+        <>
+          <View className="absolute top-[25%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[25%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+        </>
+      );
+
+    case 3:
+      return (
+        <>
+          <View className="absolute top-[25%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute inset-0 items-center justify-center">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[25%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+        </>
+      );
+
+    case 4:
+      return (
+        <>
+          <View className="absolute top-[25%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute top-[25%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[25%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[25%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+        </>
+      );
+
+    case 5:
+      return (
+        <>
+          <View className="absolute top-[25%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute top-[25%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute inset-0 items-center justify-center">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[25%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[25%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+        </>
+      );
+
+    case 6:
+      return (
+        <>
+          <View className="absolute top-[20%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute top-[20%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute top-[50%] left-[25%] -translate-y-4">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute top-[50%] right-[25%] -translate-y-4">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[20%] left-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+          <View className="absolute bottom-[20%] right-[25%]">
+            <GlowingDot size="lg" />
+          </View>
+        </>
+      );
+
+    default:
+      return null;
+  }
 };
 
 export const DiceFace: React.FC<DiceFaceProps> = ({ value, isRolling = false }) => {
@@ -77,43 +149,22 @@ export const DiceFace: React.FC<DiceFaceProps> = ({ value, isRolling = false }) 
     ],
   }));
 
-  const positions = dotPositions[value as keyof typeof dotPositions] || dotPositions[1];
-
   return (
-    <Animated.View
-      style={animatedStyle}
-      className="relative"
-    >
+    <Animated.View style={animatedStyle} className="relative">
       {/* Contenedor del dado con gradiente y sombra */}
       <View className="w-64 h-64 bg-gradient-to-br from-violet-600 to-pink-600 rounded-3xl shadow-2xl relative overflow-hidden">
         {/* Efecto de brillo superior */}
         <View className="absolute top-0 left-0 right-0 h-24 bg-white opacity-20 rounded-t-3xl" />
         
-        {/* Puntos del dado */}
-        {positions.map((pos, index) => (
-          <View
-            key={index}
-            className="absolute"
-            style={{
-              top: pos.top,
-              left: pos.left,
-              right: pos.right,
-              bottom: pos.bottom,
-              transform: pos.translate 
-                ? [{ translateX: pos.translate }, { translateY: pos.translate }] 
-                : undefined,
-            }}
-          >
-            <GlowingDot size="lg" />
-          </View>
-        ))}
+        {/* Puntos del dado según el valor */}
+        <DicePattern value={value} />
 
         {/* Borde con brillo */}
         <View className="absolute inset-0 border-4 border-white border-opacity-30 rounded-3xl" />
       </View>
 
       {/* Sombra decorativa */}
-      <View className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-56 h-8 bg-violet-900 opacity-40 blur-2xl rounded-full" />
+      <View className="absolute -bottom-4 left-1/2 -translate-x-28 w-56 h-8 bg-violet-900 opacity-40 rounded-full blur-2xl" />
     </Animated.View>
   );
 };
