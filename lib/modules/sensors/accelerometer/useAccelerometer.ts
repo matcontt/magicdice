@@ -1,85 +1,51 @@
-import { useState, useEffect, useRef } from 'react';
-import { AccelerometerService } from './accelerometer.service';
+import { useState, useEffect } from 'react';
+import { Accelerometer } from 'expo-sensors';
 import type { Vector3 } from '@/lib/core/logic/motion';
 import { calculateMagnitude } from '@/lib/core/logic/motion';
 
-/**
- * Estado retornado por el hook useAccelerometer
- */
 export type AccelerometerState = {
   data: Vector3;
   magnitude: number;
   isActive: boolean;
 };
 
-/**
- * Hook personalizado para acceder a datos del acelerómetro
- * Maneja suscripción/desuscripción automática con manejo robusto de errores
- * 
- * @returns Estado actual del acelerómetro
- */
 export const useAccelerometer = (): AccelerometerState => {
   const [data, setData] = useState<Vector3>({ x: 0, y: 0, z: 0 });
-  const [isActive, setIsActive] = useState<boolean>(false);
-  const subscriptionRef = useRef<any>(null);
-  const isMountedRef = useRef<boolean>(true);
+  const [isActive, setIsActive] = useState(false);
 
   useEffect(() => {
-    isMountedRef.current = true;
-    let mounted = true;
+    let subscription: any;
 
-    const setupAccelerometer = async () => {
+    const setup = async () => {
       try {
-        // Verificar disponibilidad
-        const available = await AccelerometerService.isAvailable();
-        
+        const available = await Accelerometer.isAvailableAsync();
         if (!available) {
-          console.warn('Acelerómetro no disponible en este dispositivo');
+          console.warn('Accelerometer not available');
           return;
         }
 
-        if (!mounted) return;
-
-        // Suscribirse a actualizaciones
-        subscriptionRef.current = AccelerometerService.subscribe(
-          (accelerometerData) => {
-            if (isMountedRef.current && mounted) {
-              setData(accelerometerData);
-              setIsActive(true);
-            }
-          }
-        );
+        Accelerometer.setUpdateInterval(100);
+        subscription = Accelerometer.addListener((d) => {
+          setData({ x: d.x ?? 0, y: d.y ?? 0, z: d.z ?? 0 });
+          setIsActive(true);
+        });
       } catch (error) {
-        console.error('Error al configurar acelerómetro:', error);
-        if (mounted) {
-          setIsActive(false);
-        }
+        console.error('Error setting up accelerometer:', error);
+        setIsActive(false);
       }
     };
 
-    setupAccelerometer();
+    setup();
 
-    // Cleanup: desuscribirse al desmontar
     return () => {
-      mounted = false;
-      isMountedRef.current = false;
-      
-      try {
-        AccelerometerService.unsubscribe(subscriptionRef.current);
-        subscriptionRef.current = null;
-      } catch (error) {
-        console.error('Error al limpiar acelerómetro:', error);
-      }
-      
+      subscription?.remove();
       setIsActive(false);
     };
   }, []);
 
-  const magnitude = calculateMagnitude(data);
-
   return {
     data,
-    magnitude,
+    magnitude: calculateMagnitude(data),
     isActive,
   };
 };
