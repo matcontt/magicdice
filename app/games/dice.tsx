@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
+import { Canvas } from '@react-three/fiber/native';
 import { useAccelerometer } from '@/lib/modules/sensors/accelerometer/useAccelerometer';
 import { isShaking, rollDice, formatMagnitude } from '@/lib/core/logic/motion';
-import { DiceFace } from '@/components/molecules/DiceFace';
+import { Dice3D } from '@/components/molecules/Dice3D';
 import { SHAKE_DEBOUNCE_MS } from '@/lib/core/constants';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
-
 export default function DiceScreen() {
   const router = useRouter();
   const [diceValue, setDiceValue] = useState(1);
@@ -16,7 +16,6 @@ export default function DiceScreen() {
   const [rollCount, setRollCount] = useState(0);
   const lastShakeTime = useRef(0);
   const { data, magnitude, isActive } = useAccelerometer();
-
   const handleDiceRoll = useCallback(() => {
     if (isRolling) return;
     
@@ -26,33 +25,27 @@ export default function DiceScreen() {
       setDiceValue(newValue);
       setRollCount(prev => prev + 1);
       setIsRolling(false);
-    }, 600);
+    }, 1500); // Aumentado para la animación 3D
   }, [isRolling]);
-
   useEffect(() => {
-    if (!isActive || isRolling) return;
-    
+    if (!isActive || isRolling) return;   
     const now = Date.now();
     if (isShaking(data) && now - lastShakeTime.current > SHAKE_DEBOUNCE_MS) {
       handleDiceRoll();
       lastShakeTime.current = now;
     }
   }, [data, isActive, isRolling, handleDiceRoll]);
-
   const handleReset = () => {
     setRollCount(0);
     setDiceValue(1);
   };
-
   return (
     <View className="flex-1 bg-[#0a0a0a]">
-      <StatusBar style="light" />
-      
+      <StatusBar style="light" />    
       <View className="absolute inset-0 overflow-hidden">
         <View className="absolute top-20 right-10 w-72 h-72 bg-violet-600/20 rounded-full blur-3xl" />
         <View className="absolute bottom-40 left-10 w-72 h-72 bg-pink-600/20 rounded-full blur-3xl" />
       </View>
-
       <SafeAreaView className="flex-1">
         <View className="flex-1 px-6 py-4">
           {/* Header */}
@@ -63,17 +56,33 @@ export default function DiceScreen() {
               </View>
             </Pressable>
             <View className="items-center">
-              <Text className="text-white text-2xl font-bold">Magic Dice</Text>
+              <Text className="text-white text-2xl font-bold">Magic Dice 3D</Text>
               <Text className="text-gray-500 text-xs">Shake to roll</Text>
             </View>
             <View className="w-12" />
           </Animated.View>
-
-          {/* Dice */}
-          <Animated.View entering={FadeIn.delay(200)} className="flex-1 items-center justify-center">
-            <DiceFace value={diceValue} isRolling={isRolling} />
+          {/* 3D Dice Canvas */}
+          <Animated.View entering={FadeIn.delay(200)} className="flex-1">
+            <Canvas
+              camera={{ position: [0, 0, 5], fov: 50 }}
+              gl={{ antialias: true }}>
+              <Suspense fallback={null}>
+                {/* Luces */}
+                <ambientLight intensity={0.5} />
+                <directionalLight position={[10, 10, 5]} intensity={1} />
+                <pointLight position={[-10, -10, -5]} intensity={0.5} />             
+                {/* Dado 3D */}
+                <Dice3D isRolling={isRolling} targetValue={diceValue} />
+              </Suspense>
+            </Canvas>
+            
+            {/* Loading overlay */}
+            {isRolling && (
+              <View className="absolute inset-0 items-center justify-center">
+                <ActivityIndicator size="large" color="#8b5cf6" />
+              </View>
+            )}
           </Animated.View>
-
           {/* Stats */}
           <Animated.View entering={FadeInUp.delay(300)} className="space-y-3 mb-4">
             <View className="bg-white/5 rounded-2xl p-5 border border-white/10">
@@ -105,7 +114,6 @@ export default function DiceScreen() {
               </View>
             </View>
           </Animated.View>
-
           {/* Buttons */}
           <Animated.View entering={FadeInUp.delay(400)} className="space-y-3">
             <Pressable onPress={handleDiceRoll} disabled={isRolling} className="active:scale-95">
