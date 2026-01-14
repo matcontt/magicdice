@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -6,6 +6,7 @@ import Animated, {
   withSpring,
   withSequence,
   withTiming,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import { GlowingDot } from '../atoms/GlowingDot';
 import { ANIMATION_CONFIG } from '@/lib/core/constants';
@@ -122,19 +123,41 @@ const DicePattern: React.FC<{ value: number }> = ({ value }) => {
 export const DiceFace: React.FC<DiceFaceProps> = ({ value, isRolling = false }) => {
   const rotation = useSharedValue(0);
   const scale = useSharedValue(1);
+  const isAnimatingRef = useRef(false);
 
   useEffect(() => {
+    // Prevenir animaciones superpuestas
+    if (isAnimatingRef.current) {
+      cancelAnimation(rotation);
+      cancelAnimation(scale);
+    }
+
     if (isRolling) {
+      isAnimatingRef.current = true;
+      
       rotation.value = withSequence(
-        withTiming(360 * 3, { duration: ANIMATION_CONFIG.ROLL_DURATION }),
+        withTiming(360 * 3, { 
+          duration: ANIMATION_CONFIG.ROLL_DURATION 
+        }),
         withTiming(0, { duration: 0 })
       );
       
       scale.value = withSequence(
-        withTiming(1.2, { duration: ANIMATION_CONFIG.ROLL_DURATION / 2 }),
-        withSpring(1, ANIMATION_CONFIG.SPRING_CONFIG)
+        withTiming(1.2, { 
+          duration: ANIMATION_CONFIG.ROLL_DURATION / 2 
+        }),
+        withSpring(1, ANIMATION_CONFIG.SPRING_CONFIG, () => {
+          isAnimatingRef.current = false;
+        })
       );
     }
+
+    return () => {
+      // Limpiar animaciones al desmontar
+      cancelAnimation(rotation);
+      cancelAnimation(scale);
+      isAnimatingRef.current = false;
+    };
   }, [isRolling, value]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -159,7 +182,7 @@ export const DiceFace: React.FC<DiceFaceProps> = ({ value, isRolling = false }) 
       </View>
 
       {/* Ground shadow */}
-      <View className="absolute -bottom-8 left-1/2 -translate-x-36 w-72 h-12 bg-violet-900/40 rounded-full" />
+      <View className="absolute -bottom-8 left-1/2 -translate-x-36 w-72 h-12 bg-violet-900/40 rounded-full blur-xl" />
     </Animated.View>
   );
 };

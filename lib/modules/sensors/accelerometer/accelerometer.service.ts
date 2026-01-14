@@ -16,7 +16,7 @@ type AccelerometerSubscription = {
 
 /**
  * Servicio para interactuar con el acelerómetro del dispositivo
- * Capa de abstracción sobre expo-sensors
+ * Capa de abstracción sobre expo-sensors con manejo robusto de errores
  */
 export const AccelerometerService = {
   /**
@@ -29,30 +29,43 @@ export const AccelerometerService = {
   subscribe: (
     callback: AccelerometerCallback,
     updateInterval: number = UPDATE_INTERVAL_MS
-  ): AccelerometerSubscription => {
-    // Configurar intervalo de actualización
-    Accelerometer.setUpdateInterval(updateInterval);
-    
-    // Crear listener
-    const subscription = Accelerometer.addListener((accelerometerData) => {
-      callback({
-        x: accelerometerData.x,
-        y: accelerometerData.y,
-        z: accelerometerData.z,
+  ): AccelerometerSubscription | null => {
+    try {
+      // Configurar intervalo de actualización
+      Accelerometer.setUpdateInterval(updateInterval);
+      
+      // Crear listener con manejo de errores
+      const subscription = Accelerometer.addListener((accelerometerData) => {
+        try {
+          callback({
+            x: accelerometerData.x ?? 0,
+            y: accelerometerData.y ?? 0,
+            z: accelerometerData.z ?? 0,
+          });
+        } catch (error) {
+          console.error('Error en callback del acelerómetro:', error);
+        }
       });
-    });
 
-    return subscription;
+      return subscription;
+    } catch (error) {
+      console.error('Error al suscribirse al acelerómetro:', error);
+      return null;
+    }
   },
 
   /**
-   * Cancela una suscripción activa
+   * Cancela una suscripción activa de forma segura
    * 
    * @param subscription - Suscripción a cancelar
    */
   unsubscribe: (subscription: AccelerometerSubscription | null): void => {
-    if (subscription) {
+    if (!subscription) return;
+
+    try {
       subscription.remove();
+    } catch (error) {
+      console.error('Error al desuscribirse del acelerómetro:', error);
     }
   },
 
@@ -62,6 +75,24 @@ export const AccelerometerService = {
    * @returns Promise<boolean>
    */
   isAvailable: async (): Promise<boolean> => {
-    return await Accelerometer.isAvailableAsync();
+    try {
+      const available = await Accelerometer.isAvailableAsync();
+      return available ?? false;
+    } catch (error) {
+      console.error('Error al verificar disponibilidad del acelerómetro:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Limpia todos los listeners del acelerómetro
+   * Útil para casos de emergencia o limpieza global
+   */
+  removeAllListeners: (): void => {
+    try {
+      Accelerometer.removeAllListeners();
+    } catch (error) {
+      console.error('Error al remover todos los listeners:', error);
+    }
   },
 };

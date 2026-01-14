@@ -14,7 +14,7 @@ export type AccelerometerState = {
 
 /**
  * Hook personalizado para acceder a datos del acelerómetro
- * Maneja suscripción/desuscripción automática
+ * Maneja suscripción/desuscripción automática con manejo robusto de errores
  * 
  * @returns Estado actual del acelerómetro
  */
@@ -22,27 +22,55 @@ export const useAccelerometer = (): AccelerometerState => {
   const [data, setData] = useState<Vector3>({ x: 0, y: 0, z: 0 });
   const [isActive, setIsActive] = useState<boolean>(false);
   const subscriptionRef = useRef<any>(null);
+  const isMountedRef = useRef<boolean>(true);
 
   useEffect(() => {
-    // Verificar disponibilidad
-    AccelerometerService.isAvailable().then((available) => {
-      if (!available) {
-        console.warn('Acelerómetro no disponible en este dispositivo');
-        return;
-      }
+    isMountedRef.current = true;
+    let mounted = true;
 
-      // Suscribirse a actualizaciones
-      subscriptionRef.current = AccelerometerService.subscribe(
-        (accelerometerData) => {
-          setData(accelerometerData);
-          setIsActive(true);
+    const setupAccelerometer = async () => {
+      try {
+        // Verificar disponibilidad
+        const available = await AccelerometerService.isAvailable();
+        
+        if (!available) {
+          console.warn('Acelerómetro no disponible en este dispositivo');
+          return;
         }
-      );
-    });
+
+        if (!mounted) return;
+
+        // Suscribirse a actualizaciones
+        subscriptionRef.current = AccelerometerService.subscribe(
+          (accelerometerData) => {
+            if (isMountedRef.current && mounted) {
+              setData(accelerometerData);
+              setIsActive(true);
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Error al configurar acelerómetro:', error);
+        if (mounted) {
+          setIsActive(false);
+        }
+      }
+    };
+
+    setupAccelerometer();
 
     // Cleanup: desuscribirse al desmontar
     return () => {
-      AccelerometerService.unsubscribe(subscriptionRef.current);
+      mounted = false;
+      isMountedRef.current = false;
+      
+      try {
+        AccelerometerService.unsubscribe(subscriptionRef.current);
+        subscriptionRef.current = null;
+      } catch (error) {
+        console.error('Error al limpiar acelerómetro:', error);
+      }
+      
       setIsActive(false);
     };
   }, []);

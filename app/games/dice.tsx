@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -20,12 +20,58 @@ export default function DiceScreen() {
   const [rollCount, setRollCount] = useState<number>(0);
   const [lastRolls, setLastRolls] = useState<number[]>([]);
   const lastShakeTime = useRef<number>(0);
+  const rollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+  const rollIdCounter = useRef<number>(0);
   
   const { data, magnitude, isActive } = useAccelerometer();
 
-  // Detector de agitación con debounce
+  // Cleanup al desmontar
   useEffect(() => {
-    if (!isActive || isRolling) return;
+    return () => {
+      isMountedRef.current = false;
+      if (rollTimeoutRef.current) {
+        clearTimeout(rollTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Función mejorada para lanzar el dado con manejo de errores
+  const handleDiceRoll = useCallback(() => {
+    if (isRolling || !isMountedRef.current) return;
+
+    try {
+      setIsRolling(true);
+      
+      // Limpiar timeout anterior si existe
+      if (rollTimeoutRef.current) {
+        clearTimeout(rollTimeoutRef.current);
+      }
+
+      rollTimeoutRef.current = setTimeout(() => {
+        if (!isMountedRef.current) return;
+
+        try {
+          const newValue = rollDice();
+          rollIdCounter.current += 1;
+          setDiceValue(newValue);
+          setRollCount(prev => prev + 1);
+          setLastRolls(prev => [newValue, ...prev].slice(0, 5));
+          setIsRolling(false);
+        } catch (error) {
+          console.error('Error al actualizar el dado:', error);
+          setIsRolling(false);
+        }
+      }, 600);
+    } catch (error) {
+      console.error('Error al lanzar el dado:', error);
+      setIsRolling(false);
+    }
+  }, [isRolling]);
+
+  // Detector de agitación optimizado con debounce
+  useEffect(() => {
+    if (!isActive || isRolling || !isMountedRef.current) return;
 
     const now = Date.now();
     const timeSinceLastShake = now - lastShakeTime.current;
@@ -34,34 +80,24 @@ export default function DiceScreen() {
       handleDiceRoll();
       lastShakeTime.current = now;
     }
-  }, [data, isActive, isRolling]);
+  }, [data, isActive, isRolling, handleDiceRoll]);
 
-  const handleDiceRoll = () => {
-    setIsRolling(true);
+  const handleReset = useCallback(() => {
+    if (!isMountedRef.current) return;
     
-    setTimeout(() => {
-      const newValue = rollDice();
-      setDiceValue(newValue);
-      setRollCount(prev => prev + 1);
-      setLastRolls(prev => [newValue, ...prev].slice(0, 5));
-      setIsRolling(false);
-    }, 600);
-  };
-
-  const handleReset = () => {
     setRollCount(0);
     setLastRolls([]);
     setDiceValue(1);
-  };
+  }, []);
 
   return (
     <View className="flex-1 bg-[#0a0a0a]">
       <StatusBar style="light" />
       
       {/* Animated Background Effects */}
-      <View className="absolute inset-0">
-        <View className="absolute top-20 right-10 w-72 h-72 bg-violet-600/20 rounded-full" />
-        <View className="absolute bottom-40 left-10 w-72 h-72 bg-pink-600/20 rounded-full" />
+      <View className="absolute inset-0 overflow-hidden">
+        <View className="absolute top-20 right-10 w-72 h-72 bg-violet-600/20 rounded-full blur-3xl" />
+        <View className="absolute bottom-40 left-10 w-72 h-72 bg-pink-600/20 rounded-full blur-3xl" />
       </View>
 
       <SafeAreaView className="flex-1">
@@ -109,23 +145,16 @@ export default function DiceScreen() {
                 </Text>
                 <View className="flex-row space-x-2">
                   {lastRolls.map((roll, idx) => {
-                    const isLatest = idx === 0;
+                    const uniqueKey = `roll-${rollIdCounter.current}-${idx}`;
+                    const RollItemAny = RollItem as any;
                     return (
-                      <View key={idx} className="flex">
-                        <View 
-                          className={`rounded-xl px-4 py-2 border ${
-                            isLatest 
-                              ? 'bg-violet-600 border-white/30' 
-                              : 'bg-gray-800 border-white/10'
-                          }`}
-                        >
-                          <Text className={`font-bold text-lg ${
-                            isLatest ? 'text-white' : 'text-gray-400'
-                          }`}>
-                            {roll}
-                          </Text>
-                        </View>
-                      </View>
+                      <RollItemAny
+                        key={uniqueKey}
+                        roll={roll} 
+                        isLatest={idx === 0} 
+                        index={idx}
+                        rollId={rollIdCounter.current}
+                      />
                     );
                   })}
                 </View>
@@ -212,3 +241,27 @@ export default function DiceScreen() {
     </View>
   );
 }
+
+// Componente separado para cada item del historial de tiradas
+const RollItem = React.memo<{
+  roll: number;
+  isLatest: boolean;
+  index: number;
+  rollId: number;
+}>(({ roll, isLatest, index, rollId }) => (
+  <View className="flex">
+    <View 
+      className={`rounded-xl px-4 py-2 border ${
+        isLatest 
+          ? 'bg-violet-600 border-white/30' 
+          : 'bg-gray-800 border-white/10'
+      }`}
+    >
+      <Text className={`font-bold text-lg ${
+        isLatest ? 'text-white' : 'text-gray-400'
+      }`}>
+        {roll}
+      </Text>
+    </View>
+  </View>
+));
