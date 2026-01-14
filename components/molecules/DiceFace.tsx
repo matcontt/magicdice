@@ -1,5 +1,3 @@
-// components/molecules/DiceFace.tsx
-
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import Animated, {
@@ -17,7 +15,6 @@ type DiceFaceProps = {
   isRolling?: boolean;
 };
 
-// Componente para cada patrón de dado
 const DicePattern: React.FC<{ value: number }> = ({ value }) => {
   switch (value) {
     case 1:
@@ -45,7 +42,7 @@ const DicePattern: React.FC<{ value: number }> = ({ value }) => {
           <View className="absolute top-[25%] left-[25%]">
             <GlowingDot size="lg" />
           </View>
-          <View className="absolute inset-0 items-center justify-center">
+          <View className="absolute top-[50%] left-[50%] -translate-x-5 -translate-y-5">
             <GlowingDot size="lg" />
           </View>
           <View className="absolute bottom-[25%] right-[25%]">
@@ -81,7 +78,7 @@ const DicePattern: React.FC<{ value: number }> = ({ value }) => {
           <View className="absolute top-[25%] right-[25%]">
             <GlowingDot size="lg" />
           </View>
-          <View className="absolute inset-0 items-center justify-center">
+          <View className="absolute top-[50%] left-[50%] -translate-x-5 -translate-y-5">
             <GlowingDot size="lg" />
           </View>
           <View className="absolute bottom-[25%] left-[25%]">
@@ -102,10 +99,10 @@ const DicePattern: React.FC<{ value: number }> = ({ value }) => {
           <View className="absolute top-[20%] right-[25%]">
             <GlowingDot size="lg" />
           </View>
-          <View className="absolute top-[50%] left-[25%] -translate-y-4">
+          <View className="absolute top-[50%] left-[25%] -translate-y-5">
             <GlowingDot size="lg" />
           </View>
-          <View className="absolute top-[50%] right-[25%] -translate-y-4">
+          <View className="absolute top-[50%] right-[25%] -translate-y-5">
             <GlowingDot size="lg" />
           </View>
           <View className="absolute bottom-[20%] left-[25%]">
@@ -128,13 +125,11 @@ export const DiceFace: React.FC<DiceFaceProps> = ({ value, isRolling = false }) 
 
   useEffect(() => {
     if (isRolling) {
-      // Animación de giro
       rotation.value = withSequence(
         withTiming(360 * 3, { duration: ANIMATION_CONFIG.ROLL_DURATION }),
         withTiming(0, { duration: 0 })
       );
       
-      // Animación de escala (rebote)
       scale.value = withSequence(
         withTiming(1.2, { duration: ANIMATION_CONFIG.ROLL_DURATION / 2 }),
         withSpring(1, ANIMATION_CONFIG.SPRING_CONFIG)
@@ -151,20 +146,20 @@ export const DiceFace: React.FC<DiceFaceProps> = ({ value, isRolling = false }) 
 
   return (
     <Animated.View style={animatedStyle} className="relative">
-      {/* Contenedor del dado con gradiente y sombra */}
-      <View className="w-64 h-64 bg-gradient-to-br from-violet-600 to-pink-600 rounded-3xl shadow-2xl relative overflow-hidden">
-        {/* Efecto de brillo superior */}
-        <View className="absolute top-0 left-0 right-0 h-24 bg-white opacity-20 rounded-t-3xl" />
+      {/* Main dice container */}
+      <View className="w-72 h-72 bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 rounded-[32px] shadow-2xl relative overflow-hidden border-4 border-white/20">
+        {/* Top shine effect */}
+        <View className="absolute top-0 left-0 right-0 h-32 bg-white/20 rounded-t-[28px]" />
         
-        {/* Puntos del dado según el valor */}
+        {/* Dice dots pattern */}
         <DicePattern value={value} />
-
-        {/* Borde con brillo */}
-        <View className="absolute inset-0 border-4 border-white border-opacity-30 rounded-3xl" />
+        
+        {/* Inner border glow */}
+        <View className="absolute inset-2 border-2 border-white/10 rounded-[24px]" />
       </View>
 
-      {/* Sombra decorativa */}
-      <View className="absolute -bottom-4 left-1/2 -translate-x-28 w-56 h-8 bg-violet-900 opacity-40 rounded-full blur-2xl" />
+      {/* Ground shadow */}
+      <View className="absolute -bottom-8 left-1/2 -translate-x-36 w-72 h-12 bg-violet-900/40 rounded-full" />
     </Animated.View>
   );
 };
