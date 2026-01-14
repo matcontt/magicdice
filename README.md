@@ -1,53 +1,30 @@
-> Edited for use in IDX on 07/09/12
+# 🎲 MagicDice
 
-# Welcome to your Expo app 👋
+**MagicDice** es una aplicación interactiva [descripción breve: ej. para simular lanzamientos de dados con efectos especiales / basada en web / desarrollada en X lenguaje]. El proyecto busca ofrecer una experiencia visual y funcional para juegos de azar o juegos de mesa.
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 🚀 Características
 
-## Get started
+- **Lanzamiento Aleatorio:** Algoritmos que garantizan resultados impredecibles.
+- **Interfaz Intuitiva:** Diseño limpio y fácil de usar.
+- [Agrega otra característica: ej. Soporte para múltiples dados (D6, D10, D20)]
+- [Agrega otra característica: ej. Animaciones fluidas al lanzar]
 
-#### Android
+## 🛠️ Tecnologías Utilizadas
 
-Android previews are defined as a `workspace.onStart` hook and started as a vscode task when the workspace is opened/started.
+Este proyecto fue construido con:
 
-Note, if you can't find the task, either:
-- Rebuild the environment (using command palette: `IDX: Rebuild Environment`), or
-- Run `npm run android -- --tunnel` command manually run android and see the output in your terminal. The device should pick up this new command and switch to start displaying the output from it.
+* **[Lenguaje]:** (ej. JavaScript, Python, Java)
+* **[Framework/Librería]:** (ej. React, Flask, Spring Boot)
+* **[Estilos]:** (ej. CSS3, Tailwind, Bootstrap)
+## 📹 GIF
+https://github.com/user-attachments/assets/6803ea22-8174-4982-870a-42cce83d6cbc
+## 📦 Instalación
 
-In the output of this command/task, you'll find options to open the app in a
+Sigue estos pasos para ejecutar el proyecto localmente:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+1. **Clona el repositorio:**
+   ```bash
+   git clone [https://github.com/matcontt/magicdice.git](https://github.com/matcontt/magicdice.git)
 
-You'll also find options to open the app's developer menu, reload the app, and more.
 
-#### Web
 
-Web previews will be started and managred automatically. Use the toolbar to manually refresh.
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
